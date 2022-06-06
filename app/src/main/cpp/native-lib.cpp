@@ -103,7 +103,69 @@ Java_pl_edu_uksw_amap_ocl_1jni_MainActivity_shutdownOCL(JNIEnv *env, jobject thi
 extern "C"
 JNIEXPORT void JNICALL
 Java_pl_edu_uksw_amap_ocl_1jni_MainActivity_multiplyOcl(JNIEnv *env, jobject thiz, jfloatArray a,
-                                                        jfloatArray b, jfloatArray result,
-                                                        jint rounds) {
-    // TODO: implement multiplyOcl()
+                                                        jfloatArray b, jfloatArray result) {
+    // get Java array size
+    jsize count = env->GetArrayLength(a);
+    assert( env->GetArrayLength(a) == env->GetArrayLength(result));
+    assert( env->GetArrayLength(b) == env->GetArrayLength(result));
+
+    // get Java array data pointers
+    jfloat* aData = env->GetFloatArrayElements(a, 0);
+    jfloat* bData = env->GetFloatArrayElements(b, 0);
+    jfloat* resultData = env->GetFloatArrayElements(result, 0);
+
+
+    size_t globalSize, localSize, bytes;
+    cl_int err;
+
+    // Number of work items in each local work group
+    localSize = 64;
+
+    // Number of total work items - localSize must be divisor
+    globalSize = ceil(count / (float) localSize) * localSize;
+
+    // Number of bytes to transfer
+    bytes = count * sizeof(jfloat);
+
+    // Create the input and output arrays in device memory for our calculation
+    cl_mem aBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY, bytes, NULL, NULL);
+    cl_mem bBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY, bytes, NULL, NULL);
+    cl_mem resultBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, bytes, NULL, NULL);
+
+    // Write our data set into the input array in device memory
+    err = clEnqueueWriteBuffer(queue, aBuffer, CL_TRUE, 0, bytes, aData, 0, NULL, NULL);
+    if (err) LOGE("Error @clEnqueueWriteBuffer:%d\n", err);
+
+    err |= clEnqueueWriteBuffer(queue, bBuffer, CL_TRUE, 0, bytes, bData, 0, NULL, NULL);
+    if (err) LOGE("Error @clEnqueueWriteBuffer:%d\n", err);
+
+    // Set the arguments to our compute kernel
+    err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &aBuffer);
+    if (err) LOGE("Error @clSetKernelArg:%d\n", err);
+
+    err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &bBuffer);
+    if (err) LOGE("Error @clSetKernelArg:%d\n", err);
+
+    err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &resultBuffer);
+    if (err) LOGE("Error @clSetKernelArg:%d\n", err);
+
+    // Execute the kernel over the entire range of the data set
+    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &globalSize, &localSize, 0, NULL, NULL);
+    if (err) LOGE("Error @clEnqueueNDRangeKernel:%d\n", err);
+
+    // Wait for the command queue to get serviced before reading back results
+    clFinish(queue);
+
+    // Read the results from the device
+    clEnqueueReadBuffer(queue, resultBuffer, CL_TRUE, 0, bytes, resultData, 0, NULL, NULL);
+
+    // release OpenCL resources
+    clReleaseMemObject(aBuffer);
+    clReleaseMemObject(bBuffer);
+    clReleaseMemObject(resultBuffer);
+
+    // release Java arrays
+    env->ReleaseFloatArrayElements(a, aData, 0);
+    env->ReleaseFloatArrayElements(b, bData, 0);
+    env->ReleaseFloatArrayElements(result, resultData, 0);
 }
