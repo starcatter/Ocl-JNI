@@ -29,12 +29,15 @@ public class MainActivity extends AppCompatActivity {
         TextView tv = binding.sampleText;
         tv.setText(stringFromJNI());
 
-        // Get multiplication result from JNI
+        // prepare data arrays
         float[] a = new float[]{1, 2, 3};
         float[] b = new float[]{2, 2, 2};
         float[] result = new float[MULTIPLY_SIZE];
+
+        // Get multiplication result from JNI
         multiplyJni(a, b, result);
 
+        // format output string
         StringBuilder resultString = new StringBuilder();
         for (int i = 0; i < MULTIPLY_SIZE; i++) {
             resultString.append(String.format("%s * %s = %s\n", a[i], b[i], result[i]));
@@ -44,8 +47,24 @@ public class MainActivity extends AppCompatActivity {
         TextView tvJni = binding.multiplyJniResult;
         tvJni.setText(resultString.toString());
 
+        // change data
+        a = new float[]{5, 10, 15};
+        b = new float[]{3, 6, 9};
+
+        // Get multiplication result from OCL
         initOCL();
+        multiplyOcl(a, b, result);
         shutdownOCL();
+
+        // format output string
+        StringBuilder oclResultString = new StringBuilder();
+        for (int i = 0; i < MULTIPLY_SIZE; i++) {
+            oclResultString.append(String.format("%s * %s = %s\n", a[i], b[i], result[i]));
+        }
+
+        // Display multiplyOcl result
+        TextView tvOcl = binding.multiplyOclresult;
+        tvOcl.setText(oclResultString.toString());
     }
 
     /**
@@ -63,5 +82,6 @@ public class MainActivity extends AppCompatActivity {
      * Init/close OpenCL context
      */
     public native void initOCL();
+    public native void multiplyOcl(float[] a, float[] b, float[] result);
     public native void shutdownOCL();
 }

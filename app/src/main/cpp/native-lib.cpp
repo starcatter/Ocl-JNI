@@ -100,3 +100,10 @@ Java_pl_edu_uksw_amap_ocl_1jni_MainActivity_shutdownOCL(JNIEnv *env, jobject thi
     clReleaseCommandQueue(queue);
     clReleaseContext(context);
 }
+extern "C"
+JNIEXPORT void JNICALL
+Java_pl_edu_uksw_amap_ocl_1jni_MainActivity_multiplyOcl(JNIEnv *env, jobject thiz, jfloatArray a,
+                                                        jfloatArray b, jfloatArray result,
+                                                        jint rounds) {
+    // TODO: implement multiplyOcl()
+}
