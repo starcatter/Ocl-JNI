@@ -43,6 +43,9 @@ public class MainActivity extends AppCompatActivity {
         // Display JNI result
         TextView tvJni = binding.multiplyJniResult;
         tvJni.setText(resultString.toString());
+
+        initOCL();
+        shutdownOCL();
     }
 
     /**
@@ -55,4 +58,10 @@ public class MainActivity extends AppCompatActivity {
      * Multiply arrays a and b, place result in "result" array
      */
     public native void multiplyJni(float[] a, float[] b, float[] result);
+
+    /**
+     * Init/close OpenCL context
+     */
+    public native void initOCL();
+    public native void shutdownOCL();
 }
